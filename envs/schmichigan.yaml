@@ -18,6 +18,8 @@ dependencies:
   - scikit-learn
   # neureal networks
   - pytorch
+  - torchvision
+  - torchaudio
   - tensorflow
   - keras
   - statsmodels
@@ -29,4 +31,3 @@ dependencies:
   - audiomentations
   - soundfile
   - pydub
-  - torchaudio
