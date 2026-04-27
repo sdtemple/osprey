@@ -6,7 +6,9 @@ channels:
 dependencies:
   - python>=3.12
   - numpy>=2.1.3
-  - pip
+  - pip:
+    - audiomentations
+    - soundfile
   - jupyter
   - notebook
   # general ml/stats
@@ -28,6 +30,4 @@ dependencies:
   - nltk
   # audio
   - librosa
-  - audiomentations
-  - soundfile
   - pydub
