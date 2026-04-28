@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "osprey"
+version = "0.1.0"
+description = "Modeling tools for species classification"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "audiomentations",
+    "librosa",
+    "matplotlib",
+    "numpy",
+    "pandas",
+    "scikit-learn",
+    "seaborn",
+    "torch",
+    "torchvision",
+]
+
+[tool.setuptools]
+packages = ["osprey"]
