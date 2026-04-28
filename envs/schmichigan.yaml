@@ -19,7 +19,7 @@ dependencies:
   - seaborn
   - networkx
   - scikit-learn
-  # neureal networks
+  # neural networks
   - pytorch
   - torchvision
   - torchaudio
