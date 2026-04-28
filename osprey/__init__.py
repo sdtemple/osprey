@@ -15,6 +15,13 @@ from .utilities import (
     width,
 )
 
+from .augment import (
+    augmenter,
+    p_augment,
+    min_gain_db,
+    max_gain_db,
+)
+
 __all__ = [
     "AudioDataset",
     "SimpleCNN",
@@ -30,4 +37,8 @@ __all__ = [
     "sr",
     "reformat_image",
     "width",
+    "augmenter",
+    "p_augment",
+    "min_gain_db",
+    "max_gain_db",
 ]

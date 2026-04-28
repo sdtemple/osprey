@@ -19,21 +19,38 @@ from .utilities import (
     sr,
     width,
 )
+from .augment import (
+    augmenter,
+    p_augment,
+    min_gain_db,
+    max_gain_db,
+)
 
 
 class AudioDataset(Dataset):
     def __init__(
         self,
         df: pd.DataFrame,
-        le,
+        le, # LabelEncoder
         base_folder: str = base_folder,
         collection_map: dict[str, str] = collection_map,
+        # mel spectrogram
         sr: int = sr,
         height_: int = height,
         width_: int = width,
         fmin_: float = fmin,
         fmax_: float = fmax,
         duration_seconds: float = duration,
+        # Gain
+        min_gain_db: float = min_gain_db,
+        max_gain_db: float = max_gain_db,
+        # probabilities of augmentation
+        p_augment: float = p_augment,
+        # p_color: float = 0.25,
+        # p_timestretch: float = 0.25,
+        # p_pitchshift: float = 0.25,
+        # p_shift: float = 0.25,
+        # p_gain: float = 0.25,
     ) -> None:
         """
         Create an audio dataset backed by a dataframe.
@@ -53,6 +70,16 @@ class AudioDataset(Dataset):
         self.fmin = fmin_
         self.fmax = fmax_
         self.duration = duration_seconds
+        self.min_gain_db = min_gain_db
+        self.max_gain_db = max_gain_db
+
+        self.p_augment = p_augment
+
+        # self.p_color = p_color
+        # self.p_timestretch = p_timestretch
+        # self.p_shift = p_shift
+        # self.p_pitchshift = p_pitchshift
+        # self.p_gain = p_gain
 
     def __len__(self) -> int:
         return len(self.df)
@@ -71,6 +98,26 @@ class AudioDataset(Dataset):
             sr=self.sr,
             duration_seconds=self.duration,
         )
+        # audio = augmenter(audio,
+        #                   sr,
+        #                   p_color=self.p_color,
+        #                   p_gain=self.p_gain,
+        #                   p_timestretch=self.p_timestretch,
+        #                   p_shift=self.p_shift,
+        #                   p_pitchshift=self.p_pitchshift,
+        #                   min_gain_db=self.min_gain_db,
+        #                   max_gain_db=self.max_gain_db,
+        #                   )
+        audio = augmenter(audio,
+                          sr,
+                          p_color=self.p_augment,
+                          p_gain=self.p_augment,
+                          p_timestretch=self.p_augment,
+                          p_shift=self.p_augment,
+                          p_pitchshift=self.p_augment,
+                          min_gain_db=self.min_gain_db,
+                          max_gain_db=self.max_gain_db,
+                          )
         x, _ = get_mel(
             audio,
             sr,
