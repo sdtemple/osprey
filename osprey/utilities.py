@@ -10,8 +10,8 @@ import pandas as pd
 import torch
 from torchvision import transforms
 
-highest_folder = "/nfs/turbo/umor-sethtem/acoustics-data"
-map_collection = {
+base_folder = "/nfs/turbo/umor-sethtem/acoustics-data"
+collection_map = {
     "iNat": "birdclef-2026/train_audio",
     "XC": "birdclef-2026/train_audio",
     "esc": "ESC-50-master/ESC-50-master/audio",
@@ -105,9 +105,9 @@ def get_audio(
 ) -> tuple[npt.NDArray[np.float32], int]:
     """Load audio for a metadata row."""
     if base_folder is None:
-        base_folder = highest_folder
+        base_folder = base_folder
     if collection_map is None:
-        collection_map = map_collection
+        collection_map = collection_map
 
     fname = f"{base_folder}/{collection_map[row['collection']]}/{row['filename']}"
     y, sample_rate = librosa.load(
