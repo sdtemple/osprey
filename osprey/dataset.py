@@ -72,7 +72,6 @@ class AudioDataset(Dataset):
         self.duration = duration_seconds
         self.min_gain_db = min_gain_db
         self.max_gain_db = max_gain_db
-
         self.p_augment = p_augment
 
         # self.p_color = p_color
