@@ -6,7 +6,7 @@ import numpy.typing as npt
 import numpy as np
 import torch
 import torch.nn as nn
-import torchvision.transforms import v2
+import torchvision.transforms as v2
 
 p_augment = 0.25
 min_gain_db = -12.
