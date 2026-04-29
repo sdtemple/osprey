@@ -68,7 +68,7 @@ class SpectrogramDatasetGPU(Dataset):
         npz_file = f"{self.base_folder}/{self.collection_map[row['collection']]}/{row['filename']}"
         
         # Load spectrogram from .npz file
-        x = np.load(npz_file)['spectrogram']
+        x = np.load(npz_file)['arr']
         
         # Convert to tensor
         x_tensor = torch.from_numpy(x).float()
@@ -274,7 +274,7 @@ class SpectrogramDataset(Dataset):
         npz_file = f"{self.base_folder}/{self.collection_map[row['collection']]}/{row['filename']}"
         
         # Load spectrogram from .npz file
-        x = np.load(npz_file)['spectrogram']
+        x = np.load(npz_file)['arr']
         
         # Convert to tensor
         x_tensor = torch.from_numpy(x).float()
