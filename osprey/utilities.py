@@ -19,7 +19,7 @@ collection_map = {
     "urban8k": "UrbanSound8K/audio/foldall",
     "dbr": "dbr-dataset/dataset/dograin",
     "freesound": "freesound/outside",
-    # "random_noise": "random-noise",
+    "random_noise": "random-noise",
     # "add": "additional_data",
 }
 

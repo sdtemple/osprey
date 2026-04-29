@@ -24,6 +24,7 @@ from .augment import (
 
 __all__ = [
     "AudioDataset",
+    "SpectrogramDataset",
     "SimpleCNN",
     "clean_row",
     "duration",
