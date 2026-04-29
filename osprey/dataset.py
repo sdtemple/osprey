@@ -65,7 +65,7 @@ class SpectrogramDatasetGPU(Dataset):
         row = clean_row(row)
         
         # Construct path to .npz file (assumes filename column exists)
-        npz_file = f"{self.base_folder}/{self.collection_map[row['collection']]}/{row['filename']}.npz"
+        npz_file = f"{self.base_folder}/{self.collection_map[row['collection']]}/{row['filename']}"
         
         # Load spectrogram from .npz file
         x = np.load(npz_file)['spectrogram']
@@ -271,7 +271,7 @@ class SpectrogramDataset(Dataset):
         row = clean_row(row)
         
         # Construct path to .npz file (assumes filename column exists)
-        npz_file = f"{self.base_folder}/{self.collection_map[row['collection']]}/{row['filename']}.npz"
+        npz_file = f"{self.base_folder}/{self.collection_map[row['collection']]}/{row['filename']}"
         
         # Load spectrogram from .npz file
         x = np.load(npz_file)['spectrogram']
