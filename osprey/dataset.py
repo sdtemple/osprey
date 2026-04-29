@@ -27,6 +27,63 @@ from .augment import (
     max_gain_db,
 )
 
+### gpu bound ###
+
+
+class SpectrogramDatasetGPU(Dataset):
+    def __init__(
+        self,
+        df: pd.DataFrame,
+        le, # LabelEncoder
+        base_folder: str = base_folder,
+        collection_map: dict[str, str] = collection_map,
+    ) -> None:
+        """
+        Create a spectrogram dataset from precomputed .npz files.
+
+        Parameters
+        ----------
+            df : pd.DataFrame
+                Dataframe with audio metadata. Must have a 'filename' column or similar
+                that can be used to construct the path to the .npz file.
+            le : sklearn.LabelEncoder
+                Label encoder for class labels.
+            npz_folder : str
+                Path to folder containing .npz files.
+        """
+        self.df = df.reset_index(drop=True)
+        self.le = le
+        self.base_folder = base_folder
+        self.collection_map = collection_map
+
+    def __len__(self) -> int:
+        return len(self.df)
+
+    def __getitem__(self, idx: int):
+        # Get the row data
+        row = self.df.iloc[idx]
+        row = clean_row(row)
+        
+        # Construct path to .npz file (assumes filename column exists)
+        npz_file = f"{self.base_folder}/{self.collection_map[row['collection']]}/{row['filename']}.npz"
+        
+        # Load spectrogram from .npz file
+        x = np.load(npz_file)['spectrogram']
+        
+        # Convert to tensor
+        x_tensor = torch.from_numpy(x).float()
+        x_tensor = x_tensor.unsqueeze(0)  # Add channel dimension
+        
+        # Get label
+        y = row['primary_label']
+        y = self.le.transform([y])[0]
+        y = torch.tensor(y)
+        
+        return x_tensor, y
+
+
+### cpu bound ###
+
 
 class AudioDataset(Dataset):
     def __init__(

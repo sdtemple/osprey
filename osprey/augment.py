@@ -15,7 +15,7 @@ max_gain_db = 12.
 
 ### for spectrogram ###
 
-def SpectrogramGain(nn.Module):
+class SpectrogramGain(nn.Module):
     """Custom transform to add logarithmic gain without overflowing uint8."""
     def __init__(self, min_gain=5, max_gain=25):
         super().__init__()
@@ -23,12 +23,12 @@ def SpectrogramGain(nn.Module):
         self.max_gain = max_gain
         
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # Generates a random scalar on the same GPU device as the tensor
-        gain = torch.randint(self.min_gain, 
-                             self.max_gain, 
-                             (1,), 
-                             device=x.device,
-                             ).float()
+        # Generates a random scalar on the same GPU device as the tensor.
+        # Use a float gain so notebook-level tuning can pass non-integer values safely.
+        gain = torch.empty((), device=x.device, dtype=x.dtype).uniform_(
+            float(self.min_gain),
+            float(self.max_gain),
+        )
         # Add gain and clamp to prevent overflow/saturation above 255
         return torch.clamp(x + gain, 0.0, 255.0)
     

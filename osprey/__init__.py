@@ -1,4 +1,4 @@
-from .dataset import AudioDataset
+from .dataset import AudioDataset, SpectrogramDataset, SpectrogramDatasetGPU
 from .models import SimpleCNN
 from .utilities import (
     clean_row,
@@ -16,7 +16,8 @@ from .utilities import (
 )
 
 from .augment import (
-    augmenter,
+    augmenter_spectrogram,
+    augmenter_waveform,
     p_augment,
     min_gain_db,
     max_gain_db,
@@ -25,6 +26,7 @@ from .augment import (
 __all__ = [
     "AudioDataset",
     "SpectrogramDataset",
+    "SpectrogramDatasetGPU",
     "SimpleCNN",
     "clean_row",
     "duration",
@@ -38,7 +40,8 @@ __all__ = [
     "sr",
     "reformat_image",
     "width",
-    "augmenter",
+    "augmenter_spectrogram",
+    "augmenter_waveform",
     "p_augment",
     "min_gain_db",
     "max_gain_db",
