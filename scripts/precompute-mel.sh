@@ -3,7 +3,7 @@ table_path=$1
 base_folder=$2
 save_folder=$3
 height=$4
-weight=$5
+width=$5
 papermill \
     ../notebooks/precompute.ipynb \
     ../notebooks/precompute-ran.ipynb \
