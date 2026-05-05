@@ -10,6 +10,8 @@ dependencies:
   - pip:
     - audiomentations
     - soundfile
+    - kagglehub
+    - kaggle
   - jupyter
   - notebook
   - papermill
