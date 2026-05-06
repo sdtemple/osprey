@@ -12,14 +12,17 @@ from torchvision import transforms
 
 base_folder = "/nfs/turbo/umor-sethtem/acoustics-data"
 collection_map = {
-    "iNat": "birdclef-2026/train_audio",
-    "XC": "birdclef-2026/train_audio",
-    "esc": "ESC-50-master/ESC-50-master/audio",
-    "arca23k": "ARCA23K/ARCA23K.audio/ARCA23K.audio",
-    "urban8k": "UrbanSound8K/audio/foldall",
-    "dbr": "dbr-dataset/dataset/dograin",
-    "freesound": "freesound/outside",
-    "random_noise": "random-noise",
+    'iNat': 'birdclef-2026/train_audio',
+    'XC': 'birdclef-2026/train_audio',
+    'iNat2': 'birdclef-2025/train_audio',
+    'XC2': 'birdclef-2025/train_audio',
+    'CSA': 'birdclef-2025/train_audio',
+    'esc': 'ESC-50-master/audio',
+    'arca23k': 'ARCA23K/ARCA23K.audio/ARCA23K.audio',
+    'urban8k': 'UrbanSound8K/audio/foldall',
+    'dbr': 'dbr-dataset/dataset/dograin',
+    'freesound': 'freesound/outside',
+    'random-noise': 'random-noise',
     # "add": "additional_data",
 }
 
