@@ -79,7 +79,7 @@ def filter_rows(input_csv: str, include_secondary: bool, rating_threshold: float
             
             if not include_secondary:
                 # Default: keep only rows with no secondary labels
-                if secondary_labels == '[]':
+                if secondary_labels == '[]' or secondary_labels == '[\'\']':
                     rows.append(row)
             else:
                 # Include all rows

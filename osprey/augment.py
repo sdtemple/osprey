@@ -17,9 +17,8 @@ max_gain_db = 12.
 
 class SpectrogramGain(nn.Module):
     """Custom transform to add logarithmic gain without overflowing uint8."""
-    def __init__(self, min_gain=5, max_gain=25, max_value: float = 255.0):
+    def __init__(self, max_gain=15., max_value: float = 255.0):
         super().__init__()
-        self.min_gain = min_gain
         self.max_gain = max_gain
         self.max_value = max_value
         
@@ -27,7 +26,7 @@ class SpectrogramGain(nn.Module):
         # Generates a random scalar on the same GPU device as the tensor.
         # Use a float gain so notebook-level tuning can pass non-integer values safely.
         gain = torch.empty((), device=x.device, dtype=x.dtype).uniform_(
-            float(self.min_gain),
+            -float(self.max_gain),
             float(self.max_gain),
         )
         # Add gain and clamp to prevent overflow/saturation above 255
@@ -37,13 +36,13 @@ class SpectrogramShift(nn.Module):
     """
     A PyTorch module that applies a circular time shift to a batch of spectrograms.
     """
-    def __init__(self, max_shift_pct: float = 0.15, dim: int = 3):
+    def __init__(self, max_shift_pct: float = 0.04, dim: int = 3):
         """
         Parameters:
         -----------
         max_shift_pct : float
             The maximum percentage of the timeline the audio can shift.
-            Defaults to 0.15 (15%).
+            Defaults to 0.04 (4%), e.g. 0.2 seconds for 5 seconds clip.
         dim : int
             The dimension representing the time axis. 
             Defaults to 3 for standard 4D batches (Batch, Channel, Freq, Time).
@@ -259,9 +258,9 @@ def augmenter_spectrogram(x: torch.Tensor,
         v2.RandomApply([SpectrogramGain(min_gain=min_gain, max_gain=max_gain, max_value=max_value)], 
                        p=p_gain,
                        ),
-        # v2.RandomApply([SpectrogramShift(max_shift_pct=max_shift_pct, dim=time_dim)], 
-        #                p=p_shift,
-        #                ),
+        v2.RandomApply([SpectrogramShift(max_shift_pct=max_shift_pct, dim=time_dim)], 
+                       p=p_shift,
+                       ),
         v2.RandomApply([SpectrogramTimeMask(max_mask_pct=max_time_mask_pct, 
                                             max_mask_num=max_time_mask_num, 
                                             dim=time_dim)], 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import argparse
 import csv
 from pathlib import Path
@@ -35,7 +37,7 @@ def parse_args():
     parser.add_argument(
         "--minimum-duration-seconds",
         type=float,
-        default=2.,
+        default=0.,
         help="Skip files shorter than this duration in seconds (default: 0.0)"
     )
     return parser.parse_args()
