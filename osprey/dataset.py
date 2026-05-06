@@ -202,7 +202,7 @@ class SpectrogramDataset(Dataset):
         max_time_mask_pct: float = 0.02,
         max_time_mask_num: int = 5,
         p_time_mask: float = 0.25,
-        max_freq_mask_pct: float = 0.02,
+        max_freq_mask_len: int = 3,
         max_freq_mask_num: int = 5,
         p_freq_mask: float = 0.25,
     ) -> None:
@@ -236,8 +236,8 @@ class SpectrogramDataset(Dataset):
                 Maximum number of time masks.
             p_time_mask : float
                 Probability of applying SpectrogramTimeMask.
-            max_freq_mask_pct : float
-                Maximum frequency mask percentage for SpectrogramFrequencyMask.
+            max_freq_mask_len : int
+                Maximum number of frequency bins a frequency mask can cover.
             max_freq_mask_num : int
                 Maximum number of frequency masks.
             p_freq_mask : float
@@ -254,7 +254,7 @@ class SpectrogramDataset(Dataset):
         self.max_time_mask_pct = max_time_mask_pct
         self.max_time_mask_num = max_time_mask_num
         self.p_time_mask = p_time_mask
-        self.max_freq_mask_pct = max_freq_mask_pct
+        self.max_freq_mask_len = max_freq_mask_len
         self.max_freq_mask_num = max_freq_mask_num
         self.p_freq_mask = p_freq_mask
         self.base_folder = base_folder

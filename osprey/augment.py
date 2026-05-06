@@ -17,10 +17,11 @@ max_gain_db = 12.
 
 class SpectrogramGain(nn.Module):
     """Custom transform to add logarithmic gain without overflowing uint8."""
-    def __init__(self, min_gain=5, max_gain=25):
+    def __init__(self, min_gain=5, max_gain=25, max_value: float = 255.0):
         super().__init__()
         self.min_gain = min_gain
         self.max_gain = max_gain
+        self.max_value = max_value
         
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # Generates a random scalar on the same GPU device as the tensor.
@@ -30,7 +31,7 @@ class SpectrogramGain(nn.Module):
             float(self.max_gain),
         )
         # Add gain and clamp to prevent overflow/saturation above 255
-        return torch.clamp(x + gain, 0.0, 255.0)
+        return torch.clamp(x + gain, 0.0, float(self.max_value))
     
 class SpectrogramShift(nn.Module):
     """
@@ -137,16 +138,16 @@ class SpectrogramFrequencyMask(nn.Module):
     A PyTorch module that applies a random frequency mask to a batch of spectrograms.
     """
     def __init__(self, 
-                 max_mask_pct: float = 0.05, 
+                 max_mask_len: int = 3, 
                  max_mask_num: int = 1,
-                 dim: int = 3, 
+                 dim: int = 2, 
                  fill_value: float = 0.0
                  ):
         """
         Parameters:
         -----------
-        max_mask_pct : float
-            The maximum percentage of the total timeline a single mask can cover.
+        max_mask_len : int
+            The maximum number of frequency bins a single mask can cover.
         max_mask_num : int
             The maximum number of masks the total timeline a single mask can cover
         dim : int
@@ -155,20 +156,20 @@ class SpectrogramFrequencyMask(nn.Module):
             The value to fill the masked area with. 
         """
         super().__init__()
-        self.max_mask_pct = max_mask_pct
+        self.max_mask_len = max_mask_len
         self.max_mask_num = max_mask_num
         self.dim = dim
         self.fill_value = fill_value
         
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # 1. Grab the total number of time steps
+        # 1. Grab the total number of frequency steps
         freq_steps = x.shape[self.dim]
         
-        # 2. Calculate the maximum allowable mask size in pixel columns
-        max_mask_len = int(freq_steps * self.max_mask_pct)
+        # 2. Clamp the maximum mask size to the available frequency bins
+        max_mask_len = min(int(self.max_mask_len), freq_steps)
         
         # Guard against zero mask length if spectrograms are extremely short
-        if max_mask_len <= 1:
+        if max_mask_len < 1:
             return x
         
         # 3. Randomly determine how many masks to apply (up to max_mask_num)
@@ -180,7 +181,7 @@ class SpectrogramFrequencyMask(nn.Module):
         # 5. Apply multiple masks
         for _ in range(num_masks):
             # Randomly determine the width of each mask
-            mask_len = torch.randint(1, max_mask_len, (1,)).item()
+            mask_len = torch.randint(1, max_mask_len + 1, (1,)).item()
             
             # Randomly determine where the mask starts (t0)
             t0 = torch.randint(0, freq_steps - mask_len, (1,)).item()
@@ -199,17 +200,18 @@ def augmenter_spectrogram(x: torch.Tensor,
                           # SpectrogramGain
                           min_gain: float = 5.,
                           max_gain: float = 25.,
+                          max_value: float = 255.,
                           p_gain: float = 0.25,
                           # SpectrogramShift
-                          max_shift_pct: float = 0.20,
+                          max_shift_pct: float = 0.05,
                           p_shift: float = 0.25,
                           # SpectrogramTimeMask
                           max_time_mask_pct: float = 0.02,
                           max_time_mask_num: int = 5,
                           p_time_mask: float = 0.25,
                           # SpectrogramFrequencyMask
-                          max_freq_mask_pct: float = 0.02,
-                          max_freq_mask_num: int = 5,
+                          max_freq_mask_len: int = 2,
+                          max_freq_mask_num: int = 3,
                           p_freq_mask: float = 0.25,
                           ) -> torch.Tensor:
     """
@@ -223,6 +225,8 @@ def augmenter_spectrogram(x: torch.Tensor,
         Minimum gain for SpectrogramGain
     max_gain : float
         Maximum gain for SpectrogramGain
+    max_value : float
+        Maximum allowed output value after gain is applied
     p_gain : float
         Probability of applying SpectrogramGain (0.0 to 1.0)
     max_shift_pct : float
@@ -235,8 +239,8 @@ def augmenter_spectrogram(x: torch.Tensor,
         Maximum number of time masks
     p_time_mask : float
         Probability of applying SpectrogramTimeMask (0.0 to 1.0)
-    max_freq_mask_pct : float
-        Maximum frequency mask percentage for SpectrogramFrequencyMask
+    max_freq_mask_len : int
+        Maximum number of frequency bins a frequency mask can cover
     max_freq_mask_num : int
         Maximum number of frequency masks
     p_freq_mask : float
@@ -252,18 +256,18 @@ def augmenter_spectrogram(x: torch.Tensor,
     freq_dim = 2 if is_batched else 1
     
     transforms = v2.Compose([
-        v2.RandomApply([SpectrogramGain(min_gain=min_gain, max_gain=max_gain)], 
+        v2.RandomApply([SpectrogramGain(min_gain=min_gain, max_gain=max_gain, max_value=max_value)], 
                        p=p_gain,
                        ),
-        v2.RandomApply([SpectrogramShift(max_shift_pct=max_shift_pct, dim=time_dim)], 
-                       p=p_shift,
-                       ),
+        # v2.RandomApply([SpectrogramShift(max_shift_pct=max_shift_pct, dim=time_dim)], 
+        #                p=p_shift,
+        #                ),
         v2.RandomApply([SpectrogramTimeMask(max_mask_pct=max_time_mask_pct, 
                                             max_mask_num=max_time_mask_num, 
                                             dim=time_dim)], 
                        p=p_time_mask,
                        ),
-        v2.RandomApply([SpectrogramFrequencyMask(max_mask_pct=max_freq_mask_pct, 
+        v2.RandomApply([SpectrogramFrequencyMask(max_mask_len=max_freq_mask_len, 
                                                  max_mask_num=max_freq_mask_num, 
                                                  dim=freq_dim)], 
                        p=p_freq_mask,

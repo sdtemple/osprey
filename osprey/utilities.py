@@ -147,4 +147,4 @@ def get_mel(
                                     mode='constant', constant_values=mn)
         x = librosa.util.fix_length(x, size=height, axis=0, 
                                     mode='constant', constant_values=mn)
-    return x[-1::-1], hop_length
+    return x[-1::-1].copy(), hop_length
