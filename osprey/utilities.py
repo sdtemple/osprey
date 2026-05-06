@@ -135,7 +135,7 @@ def get_mel(
     fmin: float = fmin,
     fmax: float = fmax,
     duration: float = duration,
-) -> tuple[npt.NDArray, int]:
+) -> npt.NDArray:
     """Get a mel-spectrogram image."""
     x = librosa.feature.melspectrogram(
         y=y,
