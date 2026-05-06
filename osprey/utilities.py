@@ -29,11 +29,15 @@ fmin = 0
 fmax = 16000
 duration = 5
 sr = 32000
+n_fft = 2048
+hop_length = 512
+n_mels = 128
+image_size = height, width
 
 
 def reformat_image(
     input_tensor: torch.Tensor,
-    image_size: tuple[int, int] = (224, 224),
+    image_size: tuple[int, int] = image_size,
     channel_size: int = 3,
 ) -> torch.Tensor:
     """Prepare spectrogram data for pretrained image models."""
@@ -121,30 +125,24 @@ def get_audio(
 
 def get_mel(
     y: npt.NDArray,
-    sr: int,
-    height: int = height,
-    width: int = width,
+    sr: int = sr,
+    n_mels: int = n_mels,
+    n_fft: int = n_fft,
+    hop_length: int = hop_length,
     fmin: float = fmin,
     fmax: float = fmax,
     duration: float = duration,
 ) -> tuple[npt.NDArray, int]:
     """Get a mel-spectrogram image."""
-    l = sr * duration
-    h = l / (width - 1)
-    hop_length = math.ceil(h)
     x = librosa.feature.melspectrogram(
         y=y,
         sr=sr,
+        n_fft=n_fft,
         hop_length=hop_length,
-        n_mels=height,
+        n_mels=n_mels,
         fmin=fmin,
         fmax=fmax,
     )
     x = librosa.power_to_db(x, ref=np.max)
     mn = np.min(x)
-    if x.shape != (width, height):
-        x = librosa.util.fix_length(x, size=width, axis=1, 
-                                    mode='constant', constant_values=mn)
-        x = librosa.util.fix_length(x, size=height, axis=0, 
-                                    mode='constant', constant_values=mn)
-    return x[-1::-1].copy(), hop_length
+    return x[-1::-1].copy()
