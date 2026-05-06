@@ -98,7 +98,7 @@ class AudioDataset(Dataset):
         width: int = width,
         fmin: float = fmin,
         fmax: float = fmax,
-        duration_seconds: float = duration,
+        duration: float = duration,
         # Gain
         min_gain_db: float = min_gain_db,
         max_gain_db: float = max_gain_db,
@@ -127,7 +127,7 @@ class AudioDataset(Dataset):
         self.width = width
         self.fmin = fmin
         self.fmax = fmax
-        self.duration = duration_seconds
+        self.duration = duration
         self.min_gain_db = min_gain_db
         self.max_gain_db = max_gain_db
         self.p_augment = p_augment
