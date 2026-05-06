@@ -101,7 +101,7 @@ def get_audio(
     base_folder: str | None = None,
     collection_map: Mapping[str, str] | None = None,
     sr: int = sr,
-    duration_seconds: float = duration,
+    duration: float = duration,
 ) -> tuple[npt.NDArray[np.float32], int]:
     """Load audio for a metadata row."""
     if base_folder is None:
@@ -113,7 +113,7 @@ def get_audio(
     y, sample_rate = librosa.load(
         fname,
         sr=sr,
-        duration=duration_seconds,
+        duration=duration,
         offset=row["start_seconds"],
     )
     return y, sample_rate
@@ -122,25 +122,29 @@ def get_audio(
 def get_mel(
     y: npt.NDArray,
     sr: int,
-    height_: int = height,
-    width_: int = width,
-    fmin_: float = fmin,
-    fmax_: float = fmax,
-    duration_seconds: float = duration,
+    height: int = height,
+    width: int = width,
+    fmin: float = fmin,
+    fmax: float = fmax,
+    duration: float = duration,
 ) -> tuple[npt.NDArray, int]:
     """Get a mel-spectrogram image."""
-    l = sr * duration_seconds
-    h = l / (width_ - 1)
+    l = sr * duration
+    h = l / (width - 1)
     hop_length = math.ceil(h)
     x = librosa.feature.melspectrogram(
         y=y,
         sr=sr,
         hop_length=hop_length,
-        n_mels=height_,
-        fmin=fmin_,
-        fmax=fmax_,
+        n_mels=height,
+        fmin=fmin,
+        fmax=fmax,
     )
-    if x.shape != (width_, height_):
-        x = librosa.util.fix_length(x, size=width_, axis=0)
-        x = librosa.util.fix_length(x, size=height_, axis=1)
-    return x, hop_length
+    x = librosa.power_to_db(x, ref=np.max)
+    mn = np.min(x)
+    if x.shape != (width, height):
+        x = librosa.util.fix_length(x, size=width, axis=1, 
+                                    mode='constant', constant_values=mn)
+        x = librosa.util.fix_length(x, size=height, axis=0, 
+                                    mode='constant', constant_values=mn)
+    return x[-1::-1], hop_length

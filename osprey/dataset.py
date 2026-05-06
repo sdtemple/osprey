@@ -68,7 +68,7 @@ class SpectrogramDatasetGPU(Dataset):
         npz_file = f"{self.base_folder}/{self.collection_map[row['collection']]}/{row['filename']}"
         
         # Load spectrogram from .npz file
-        x = np.load(npz_file)['arr']
+        x = np.load(npz_file)['spectrogram']
         
         # Convert to tensor
         x_tensor = torch.from_numpy(x).float()
@@ -94,10 +94,10 @@ class AudioDataset(Dataset):
         collection_map: dict[str, str] = collection_map,
         # mel spectrogram
         sr: int = sr,
-        height_: int = height,
-        width_: int = width,
-        fmin_: float = fmin,
-        fmax_: float = fmax,
+        height: int = height,
+        width: int = width,
+        fmin: float = fmin,
+        fmax: float = fmax,
         duration_seconds: float = duration,
         # Gain
         min_gain_db: float = min_gain_db,
@@ -123,10 +123,10 @@ class AudioDataset(Dataset):
         self.base_folder = base_folder
         self.collection_map = collection_map
         self.sr = sr
-        self.height = height_
-        self.width = width_
-        self.fmin = fmin_
-        self.fmax = fmax_
+        self.height = height
+        self.width = width
+        self.fmin = fmin
+        self.fmax = fmax
         self.duration = duration_seconds
         self.min_gain_db = min_gain_db
         self.max_gain_db = max_gain_db
@@ -153,7 +153,7 @@ class AudioDataset(Dataset):
             base_folder=self.base_folder,
             collection_map=self.collection_map,
             sr=self.sr,
-            duration_seconds=self.duration,
+            duration=self.duration,
         )
         audio = augmenter_waveform(audio,
                                     sr,
@@ -168,14 +168,12 @@ class AudioDataset(Dataset):
         x, _ = get_mel(
             audio,
             sr,
-            height_=self.height,
-            width_=self.width,
-            fmin_=self.fmin,
-            fmax_=self.fmax,
-            duration_seconds=self.duration,
+            height=self.height,
+            width=self.width,
+            fmin=self.fmin,
+            fmax=self.fmax,
+            duration=self.duration,
         )
-        x = librosa.power_to_db(x, ref=np.max)
-        
         # Convert to tensor
         x_tensor = torch.from_numpy(x).float()
         x_tensor = x_tensor.unsqueeze(0)
@@ -274,7 +272,7 @@ class SpectrogramDataset(Dataset):
         npz_file = f"{self.base_folder}/{self.collection_map[row['collection']]}/{row['filename']}"
         
         # Load spectrogram from .npz file
-        x = np.load(npz_file)['arr']
+        x = np.load(npz_file)['spectrogram']
         
         # Convert to tensor
         x_tensor = torch.from_numpy(x).float()
