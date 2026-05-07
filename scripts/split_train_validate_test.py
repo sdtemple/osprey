@@ -69,7 +69,7 @@ def filter_rows(input_csv: str, include_secondary: bool, rating_threshold: float
             # Filter out XC files with rating < 3
             collection = row.get('collection', '').strip()
             rating_str = row.get('rating', '').strip()
-            if collection == 'XC' and rating_str:
+            if (collection == 'XC' or collection == "XC2") and rating_str:
                 try:
                     rating = float(rating_str)
                     if rating < rating_threshold:

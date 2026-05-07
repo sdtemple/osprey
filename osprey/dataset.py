@@ -80,7 +80,8 @@ class SpectrogramDataset(Dataset):
         x_tensor = x_tensor.unsqueeze(0)  # Add channel dimension
         
         # Get label
-        y = row['primary_label']
+        # y = row['primary_label']
+        y = row['primary_label_append']
         y_idx = self.le.transform([y])[0]
         
         if self.encode_labels_onehot:
@@ -162,7 +163,8 @@ class AudioDataset(Dataset):
             audio = audio[:target_num_samples]
 
         x_tensor = torch.from_numpy(audio).float()
-        y = row['primary_label']
+        # y = row['primary_label']
+        y = row['primary_label_append']
         y_idx = self.le.transform([y])[0]
         
         if self.encode_labels_onehot:
@@ -220,7 +222,6 @@ def waveform_batch_to_mel(
             n_mels=n_mels,
             fmin=fmin,
             fmax=fmax,
-            duration=duration,
         )
         mel_batch.append(torch.from_numpy(mel).float().unsqueeze(0))
 

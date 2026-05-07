@@ -87,7 +87,8 @@ def clean_row(row: pd.Series) -> dict[str, Any]:
     """Subset the useful info in each row."""
     row = row[
         [
-            "primary_label",
+            # "primary_label",
+            "primary_label_append",
             "common_name",
             "sampling_rate_hz",
             "start_seconds",
@@ -134,7 +135,6 @@ def get_mel(
     hop_length: int = hop_length,
     fmin: float = fmin,
     fmax: float = fmax,
-    duration: float = duration,
 ) -> npt.NDArray:
     """Get a mel-spectrogram image."""
     x = librosa.feature.melspectrogram(
@@ -147,5 +147,4 @@ def get_mel(
         fmax=fmax,
     )
     x = librosa.power_to_db(x, ref=np.max)
-    mn = np.min(x)
     return x[-1::-1].copy()
