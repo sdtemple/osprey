@@ -197,7 +197,6 @@ class SpectrogramFrequencyMask(nn.Module):
     
 def augmenter_spectrogram(x: torch.Tensor,
                           # SpectrogramGain
-                          min_gain: float = 5.,
                           max_gain: float = 25.,
                           max_value: float = 255.,
                           p_gain: float = 0.25,
@@ -220,8 +219,6 @@ def augmenter_spectrogram(x: torch.Tensor,
     -----------
     x : torch.Tensor
         Input spectrogram tensor. Expected shape: (Batch, Channel, Freq, Time) or (Channel, Freq, Time)
-    min_gain : float
-        Minimum gain for SpectrogramGain
     max_gain : float
         Maximum gain for SpectrogramGain
     max_value : float
@@ -255,7 +252,7 @@ def augmenter_spectrogram(x: torch.Tensor,
     freq_dim = 2 if is_batched else 1
     
     transforms = v2.Compose([
-        v2.RandomApply([SpectrogramGain(min_gain=min_gain, max_gain=max_gain, max_value=max_value)], 
+        v2.RandomApply([SpectrogramGain(max_gain=max_gain, max_value=max_value)], 
                        p=p_gain,
                        ),
         v2.RandomApply([SpectrogramShift(max_shift_pct=max_shift_pct, dim=time_dim)], 
