@@ -38,6 +38,7 @@ class SpectrogramDataset(Dataset):
         base_folder: str = base_folder,
         collection_map: dict[str, str] = collection_map,
         encode_labels_onehot: bool = False,
+        mel_time_size: int | None = None,
     ) -> None:
         """
         Create a spectrogram dataset from precomputed .npz files.
@@ -53,12 +54,16 @@ class SpectrogramDataset(Dataset):
                 Path to folder containing .npz files.
             encode_labels_onehot : bool
                 If True, return one-hot encoded labels. If False, return class indices.
+            mel_time_size : int | None
+                Target time dimension size for mel spectrograms. If specified, spectrograms
+                shorter than this will be randomly padded. If None, no padding is applied.
         """
         self.df = df.reset_index(drop=True)
         self.le = le
         self.base_folder = base_folder
         self.collection_map = collection_map
         self.encode_labels_onehot = encode_labels_onehot
+        self.mel_time_size = mel_time_size
         self.num_classes = len(le.classes_)
 
     def __len__(self) -> int:
@@ -74,6 +79,16 @@ class SpectrogramDataset(Dataset):
         
         # Load spectrogram from .npz file
         x = np.load(npz_file)['spectrogram']
+        
+        # Apply random padding if mel_time_size is specified
+        if self.mel_time_size is not None:
+            current_time_size = x.shape[-1]  # Last dimension is time
+            if current_time_size < self.mel_time_size:
+                pad_amount = self.mel_time_size - current_time_size
+                # Randomly distribute padding between left and right
+                left_pad = np.random.randint(0, pad_amount + 1)
+                right_pad = pad_amount - left_pad
+                x = np.pad(x, ((0, 0), (left_pad, right_pad)), mode='constant', constant_values=0)
         
         # Convert to tensor
         x_tensor = torch.from_numpy(x).float()
@@ -188,8 +203,18 @@ def waveform_batch_to_mel(
     p_augment: float = p_augment,
     min_gain_db: float = min_gain_db,
     max_gain_db: float = max_gain_db,
+    mel_time_size: int | None = None,
 ) -> torch.Tensor:
-    """Convert a batch of waveforms into mel spectrogram tensors."""
+    """Convert a batch of waveforms into mel spectrogram tensors.
+    
+    Parameters
+    ----------
+        waveforms : torch.Tensor
+            Batch of waveforms.
+        mel_time_size : int | None
+            Target time dimension size for mel spectrograms. If specified, spectrograms
+            shorter than this will be randomly padded. If None, no padding is applied.
+    """
     if waveforms.dim() == 1:
         waveforms = waveforms.unsqueeze(0)
     elif waveforms.dim() == 3 and waveforms.shape[1] == 1:
@@ -223,6 +248,17 @@ def waveform_batch_to_mel(
             fmin=fmin,
             fmax=fmax,
         )
+        
+        # Apply random padding if mel_time_size is specified
+        if mel_time_size is not None:
+            current_time_size = mel.shape[-1]  # Last dimension is time
+            if current_time_size < mel_time_size:
+                pad_amount = mel_time_size - current_time_size
+                # Randomly distribute padding between left and right
+                left_pad = np.random.randint(0, pad_amount + 1)
+                right_pad = pad_amount - left_pad
+                mel = np.pad(mel, ((0, 0), (left_pad, right_pad)), mode='constant', constant_values=0)
+        
         mel_batch.append(torch.from_numpy(mel).float().unsqueeze(0))
 
     return torch.stack(mel_batch, dim=0)
