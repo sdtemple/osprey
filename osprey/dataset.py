@@ -3,6 +3,7 @@ from __future__ import annotations
 import pandas as pd
 import numpy as np
 import torch
+import torch.nn.functional as F
 from torch.utils.data import Dataset
 
 from .utilities import (
@@ -15,11 +16,9 @@ from .utilities import (
     hop_length,
     get_audio,
     get_mel,
-    height,
     base_folder,
     collection_map,
     sr,
-    width,
 )
 from .augment import (
     augmenter_waveform,
@@ -38,6 +37,7 @@ class SpectrogramDataset(Dataset):
         le, # LabelEncoder
         base_folder: str = base_folder,
         collection_map: dict[str, str] = collection_map,
+        encode_labels_onehot: bool = False,
     ) -> None:
         """
         Create a spectrogram dataset from precomputed .npz files.
@@ -51,11 +51,15 @@ class SpectrogramDataset(Dataset):
                 Label encoder for class labels.
             npz_folder : str
                 Path to folder containing .npz files.
+            encode_labels_onehot : bool
+                If True, return one-hot encoded labels. If False, return class indices.
         """
         self.df = df.reset_index(drop=True)
         self.le = le
         self.base_folder = base_folder
         self.collection_map = collection_map
+        self.encode_labels_onehot = encode_labels_onehot
+        self.num_classes = len(le.classes_)
 
     def __len__(self) -> int:
         return len(self.df)
@@ -77,10 +81,14 @@ class SpectrogramDataset(Dataset):
         
         # Get label
         y = row['primary_label']
-        y = self.le.transform([y])[0]
-        y = torch.tensor(y)
+        y_idx = self.le.transform([y])[0]
         
-        return x_tensor, y
+        if self.encode_labels_onehot:
+            y_tensor = F.one_hot(torch.tensor(y_idx, dtype=torch.long), num_classes=self.num_classes).float()
+        else:
+            y_tensor = torch.tensor(y_idx, dtype=torch.long)
+        
+        return x_tensor, y_tensor
 
 
 ### cpu bound ###
@@ -95,6 +103,7 @@ class AudioDataset(Dataset):
         collection_map: dict[str, str] = collection_map,
         sr: int = sr,
         duration: float = duration,
+        encode_labels_onehot: bool = False,
     ) -> None:
         """
         Create an audio dataset backed by a dataframe.
@@ -115,6 +124,8 @@ class AudioDataset(Dataset):
                 Sampling rate for audio loading.
             duration : float
                 Duration in seconds for audio clips.
+            encode_labels_onehot : bool
+                If True, return one-hot encoded labels. If False, return class indices.
         """
         self.df = df.reset_index(drop=True)
         self.le = le
@@ -122,6 +133,8 @@ class AudioDataset(Dataset):
         self.collection_map = collection_map
         self.sr = sr
         self.duration = duration
+        self.encode_labels_onehot = encode_labels_onehot
+        self.num_classes = len(le.classes_)
 
     def __len__(self) -> int:
         return len(self.df)
@@ -150,10 +163,14 @@ class AudioDataset(Dataset):
 
         x_tensor = torch.from_numpy(audio).float()
         y = row['primary_label']
-        y = self.le.transform([y])[0]
-        y = torch.tensor(y)
+        y_idx = self.le.transform([y])[0]
+        
+        if self.encode_labels_onehot:
+            y_tensor = F.one_hot(torch.tensor(y_idx, dtype=torch.long), num_classes=self.num_classes).float()
+        else:
+            y_tensor = torch.tensor(y_idx, dtype=torch.long)
 
-        return x_tensor, y
+        return x_tensor, y_tensor
 
 
 def waveform_batch_to_mel(

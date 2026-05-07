@@ -1,5 +1,8 @@
 from .dataset import AudioDataset, SpectrogramDataset, waveform_batch_to_mel
-from .models import SimpleCNN
+from .models import (
+    FocalCrossEntropyLoss,
+    FocalBCEWithLogitsLoss,
+)
 from .utilities import (
     clean_row,
     duration,
@@ -48,4 +51,9 @@ __all__ = [
     "p_augment",
     "min_gain_db",
     "max_gain_db",
+    "n_mels",
+    "n_fft",
+    "hop_length",
+    "FocalBCEWithLogitsLoss",
+    "FocalCrossEntropyLoss",
 ]
