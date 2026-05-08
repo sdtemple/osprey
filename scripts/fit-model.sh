@@ -3,16 +3,19 @@ output=$1
 table=$2
 base_folder=/nfs/turbo/umor-sethtem/log-spectrogram-128mel-2048fft-512hop-5dur
 model=$3
-loss_name=$4
-num_augments=$5
-num_epochs=$6
-batch_size=256
-num_workers=$7
+freeze_inner=$4
+head_only=$5
+loss_name=$6
+conduct_cv=$7
+num_augments=$8
+num_epochs=$9
+batch_size=${10}
+num_workers=${11}
 mel_time_size=313
-alpha=0.05
+alpha=${12}
 papermill \
     ../notebooks/fit-spec.ipynb \
-    ../notebooks/fit-spec-$model-ran.ipynb \
+    $output/$model/fit-spec-ran.ipynb \
     -p table_path $table \
     -p output_folder $output/$model \
     -p num_augments $num_augments \
@@ -24,4 +27,7 @@ papermill \
     -p model_path model.safetensors \
     -p base_folder $base_folder  \
     -p mel_time_size $mel_time_size \
-    -p label_smoothing_alpha $alpha
+    -p label_smoothing_alpha $alpha \
+    -p freeze_inner $freeze_inner \
+    -p head_only $head_only \
+    -p conduct_cv $conduct_cv
