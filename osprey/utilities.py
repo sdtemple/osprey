@@ -49,12 +49,12 @@ def reformat_image(
     if len(input_tensor.shape) < 4:
         input_tensor = input_tensor.unsqueeze(0)
 
-    # check gray or rgb
-    if input_tensor.shape[1] in [1,3]:
-        raise ValueError("Channel size is not 1 (grayscale) or 3 (RGB)")
     # repeat to rgb
     if input_tensor.shape[1] == 1:
         input_tensor = input_tensor.repeat(1, 3, 1, 1)
+    elif input_tensor.shape[1] != 3:
+        raise ValueError("Channel size is not 1 (grayscale) or 3 (RGB)")
+
 
     # normalize
     if input_tensor.max() > 1.0:

@@ -32,43 +32,6 @@ class SpectrogramGain(nn.Module):
         # Add gain and clamp to prevent overflow/saturation above 255
         return torch.clamp(x + gain, 0.0, float(self.max_value))
     
-class SpectrogramShift(nn.Module):
-    """
-    A PyTorch module that applies a circular time shift to a batch of spectrograms.
-    """
-    def __init__(self, max_shift_pct: float = 0.04, dim: int = 3):
-        """
-        Parameters:
-        -----------
-        max_shift_pct : float
-            The maximum percentage of the timeline the audio can shift.
-            Defaults to 0.04 (4%), e.g. 0.2 seconds for 5 seconds clip.
-        dim : int
-            The dimension representing the time axis. 
-            Defaults to 3 for standard 4D batches (Batch, Channel, Freq, Time).
-            Set to 2 if applying to 3D single items (Channel, Freq, Time).
-        """
-        super().__init__()
-        self.max_shift_pct = max_shift_pct
-        self.dim = dim
-        
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # 1. Grab the total number of time steps
-        time_steps = x.shape[self.dim]
-        
-        # 2. Calculate the maximum allowable shift in pixel columns
-        max_shift = int(time_steps * self.max_shift_pct)
-        
-        # Guard against zero shift if spectrograms are extremely short
-        if max_shift == 0:
-            return x
-            
-        # 3. Generate a single random shift integer bounded by the percentage
-        shift_amount = torch.randint(-max_shift, max_shift, (1,)).item()
-        
-        # 4. Perform the circular shift along the specified dimension
-        return torch.roll(x, shifts=shift_amount, dims=self.dim)
-    
 class SpectrogramTimeMask(nn.Module):
     """
     A PyTorch module that applies a random time mask to a batch of spectrograms.
@@ -200,9 +163,6 @@ def augmenter_spectrogram(x: torch.Tensor,
                           max_gain: float = 25.,
                           max_value: float = 255.,
                           p_gain: float = 0.25,
-                          # SpectrogramShift
-                          max_shift_pct: float = 0.05,
-                          p_shift: float = 0.25,
                           # SpectrogramTimeMask
                           max_time_mask_pct: float = 0.02,
                           max_time_mask_num: int = 5,
@@ -225,10 +185,6 @@ def augmenter_spectrogram(x: torch.Tensor,
         Maximum allowed output value after gain is applied
     p_gain : float
         Probability of applying SpectrogramGain (0.0 to 1.0)
-    max_shift_pct : float
-        Maximum shift percentage for SpectrogramShift
-    p_shift : float
-        Probability of applying SpectrogramShift (0.0 to 1.0)
     max_time_mask_pct : float
         Maximum time mask percentage for SpectrogramTimeMask
     max_time_mask_num : int
@@ -254,9 +210,6 @@ def augmenter_spectrogram(x: torch.Tensor,
     transforms = v2.Compose([
         v2.RandomApply([SpectrogramGain(max_gain=max_gain, max_value=max_value)], 
                        p=p_gain,
-                       ),
-        v2.RandomApply([SpectrogramShift(max_shift_pct=max_shift_pct, dim=time_dim)], 
-                       p=p_shift,
                        ),
         v2.RandomApply([SpectrogramTimeMask(max_mask_pct=max_time_mask_pct, 
                                             max_mask_num=max_time_mask_num, 
@@ -308,12 +261,6 @@ def augmenter_waveform(y: npt.NDArray,
     assert in_between(p_pitchshift)
     assert in_between(p_shift)
     assert in_between(p_gain)
-    
-    colors = [
-        _ for _ in range(-6,7,1)
-    ]
-    n_colors = len(colors)
-    color = colors[randint(0, n_colors - 1)]
 
     augment = Compose([
 
