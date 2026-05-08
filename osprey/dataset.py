@@ -39,6 +39,7 @@ class SpectrogramDataset(Dataset):
         collection_map: dict[str, str] = collection_map,
         encode_labels_onehot: bool = False,
         mel_time_size: int | None = None,
+        label_smoothing_alpha: float = 0.0,
     ) -> None:
         """
         Create a spectrogram dataset from precomputed .npz files.
@@ -64,6 +65,7 @@ class SpectrogramDataset(Dataset):
         self.collection_map = collection_map
         self.encode_labels_onehot = encode_labels_onehot
         self.mel_time_size = mel_time_size
+        self.label_smoothing_alpha = float(label_smoothing_alpha)
         self.num_classes = len(le.classes_)
 
     def __len__(self) -> int:
@@ -100,7 +102,12 @@ class SpectrogramDataset(Dataset):
         y_idx = self.le.transform([y])[0]
         
         if self.encode_labels_onehot:
-            y_tensor = F.one_hot(torch.tensor(y_idx, dtype=torch.long), num_classes=self.num_classes).float()
+            y_onehot = F.one_hot(torch.tensor(y_idx, dtype=torch.long), num_classes=self.num_classes).float()
+            alpha = float(self.label_smoothing_alpha)
+            if alpha > 0.0:
+                y_tensor = y_onehot * (1.0 - alpha) + (alpha / float(self.num_classes))
+            else:
+                y_tensor = y_onehot
         else:
             y_tensor = torch.tensor(y_idx, dtype=torch.long)
         
@@ -120,6 +127,7 @@ class AudioDataset(Dataset):
         sr: int = sr,
         duration: float = duration,
         encode_labels_onehot: bool = False,
+        label_smoothing_alpha: float = 0.0,
     ) -> None:
         """
         Create an audio dataset backed by a dataframe.
@@ -150,6 +158,7 @@ class AudioDataset(Dataset):
         self.sr = sr
         self.duration = duration
         self.encode_labels_onehot = encode_labels_onehot
+        self.label_smoothing_alpha = float(label_smoothing_alpha)
         self.num_classes = len(le.classes_)
 
     def __len__(self) -> int:
@@ -183,7 +192,12 @@ class AudioDataset(Dataset):
         y_idx = self.le.transform([y])[0]
         
         if self.encode_labels_onehot:
-            y_tensor = F.one_hot(torch.tensor(y_idx, dtype=torch.long), num_classes=self.num_classes).float()
+            y_onehot = F.one_hot(torch.tensor(y_idx, dtype=torch.long), num_classes=self.num_classes).float()
+            alpha = float(self.label_smoothing_alpha)
+            if alpha > 0.0:
+                y_tensor = y_onehot * (1.0 - alpha) + (alpha / float(self.num_classes))
+            else:
+                y_tensor = y_onehot
         else:
             y_tensor = torch.tensor(y_idx, dtype=torch.long)
 
