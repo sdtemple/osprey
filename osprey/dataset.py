@@ -27,6 +27,35 @@ from .augment import (
     max_gain_db,
 )
 
+
+def pad_mel_to_multiple(mel: np.ndarray, multiple: int = 32) -> np.ndarray:
+    """Pad a 2D mel spectrogram to 32-aligned dimensions.
+
+    The frequency axis is padded only on top, while the time axis is padded with a
+    random left/right split so the added context is not biased to one side.
+    """
+    if mel.ndim != 2:
+        raise ValueError("Expected a 2D mel spectrogram.")
+
+    freq_pad = (-mel.shape[0]) % multiple
+    time_pad = (-mel.shape[1]) % multiple
+
+    top_pad = freq_pad
+    bottom_pad = 0
+
+    left_pad = np.random.randint(0, time_pad + 1) if time_pad > 0 else 0
+    right_pad = time_pad - left_pad
+
+    if freq_pad > 0 or time_pad > 0:
+        mel = np.pad(
+            mel,
+            ((top_pad, bottom_pad), (left_pad, right_pad)),
+            mode="constant",
+            constant_values=0,
+        )
+
+    return mel
+
 ### gpu bound ###
 
 
@@ -91,10 +120,14 @@ class SpectrogramDataset(Dataset):
                 left_pad = np.random.randint(0, pad_amount + 1)
                 right_pad = pad_amount - left_pad
                 x = np.pad(x, ((0, 0), (left_pad, right_pad)), mode='constant', constant_values=0)
+
+        x = pad_mel_to_multiple(x, 32)
         
         # Convert to tensor
         x_tensor = torch.from_numpy(x).float()
         x_tensor = x_tensor.unsqueeze(0)  # Add channel dimension
+
+        
         
         # Get label
         # y = row['primary_label']
@@ -187,7 +220,6 @@ class AudioDataset(Dataset):
             audio = audio[:target_num_samples]
 
         x_tensor = torch.from_numpy(audio).float()
-        # y = row['primary_label']
         y = row['primary_label']
         y_idx = self.le.transform([y])[0]
         
@@ -272,6 +304,8 @@ def waveform_batch_to_mel(
                 left_pad = np.random.randint(0, pad_amount + 1)
                 right_pad = pad_amount - left_pad
                 mel = np.pad(mel, ((0, 0), (left_pad, right_pad)), mode='constant', constant_values=0)
+
+        mel = pad_mel_to_multiple(mel, 32)
         
         mel_batch.append(torch.from_numpy(mel).float().unsqueeze(0))
 

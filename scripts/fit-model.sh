@@ -9,6 +9,7 @@ num_epochs=$6
 batch_size=256
 num_workers=$7
 mel_time_size=313
+alpha=0.05
 papermill \
     ../notebooks/fit-spec.ipynb \
     ../notebooks/fit-spec-$model-ran.ipynb \
@@ -22,4 +23,5 @@ papermill \
     -p model_name $model \
     -p model_path model.safetensors \
     -p base_folder $base_folder  \
-    -p mel_time_size $mel_time_size
+    -p mel_time_size $mel_time_size \
+    -p label_smoothing_alpha $alpha

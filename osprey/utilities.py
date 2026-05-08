@@ -25,9 +25,6 @@ collection_map = {
     'random-noise': 'random-noise',
     # "add": "additional_data",
 }
-
-height = 224
-width = 224
 fmin = 0
 fmax = 16000
 duration = 5
@@ -35,52 +32,39 @@ sr = 32000
 n_fft = 2048
 hop_length = 512
 n_mels = 128
-image_size = height, width
-
 
 def reformat_image(
     input_tensor: torch.Tensor,
-    image_size: tuple[int, int] = image_size,
-    channel_size: int = 3,
 ) -> torch.Tensor:
-    """Prepare spectrogram data for pretrained image models."""
+    """Prepare spectrogram data for pretrained image models.
+
+    This keeps the spectrogram spatial dimensions unchanged and only expands
+    grayscale inputs to RGB when needed before applying channel-wise normalization.
+    """
     input_tensor = input_tensor.detach().clone().to(dtype=torch.float32)
 
+    # add channel and/or batch dimension
     if len(input_tensor.shape) < 3:
         input_tensor = input_tensor.unsqueeze(0)
     if len(input_tensor.shape) < 4:
         input_tensor = input_tensor.unsqueeze(0)
 
-    if input_tensor.shape[1] != channel_size:
-        input_tensor = input_tensor.repeat(1, channel_size, 1, 1)
+    # check gray or rgb
+    if input_tensor.shape[1] in [1,3]:
+        raise ValueError("Channel size is not 1 (grayscale) or 3 (RGB)")
+    # repeat to rgb
+    if input_tensor.shape[1] == 1:
+        input_tensor = input_tensor.repeat(1, 3, 1, 1)
 
+    # normalize
     if input_tensor.max() > 1.0:
         input_tensor /= 255.0
+    normalize = transforms.Normalize(
+        mean=[0.485, 0.456, 0.406],
+        std=[0.229, 0.224, 0.225],
+    )
 
-    if channel_size == 3:
-        normalize = transforms.Normalize(
-            mean=[0.485, 0.456, 0.406],
-            std=[0.229, 0.224, 0.225],
-        )
-    elif channel_size == 1:
-        normalize = transforms.Normalize(mean=[0.449], std=[0.226])
-    else:
-        raise ValueError("Channel size is not 1 (grayscale) or 3 (RGB)")
-
-    if input_tensor.shape[-2:] != image_size:
-        preproc = transforms.Compose(
-            [
-                transforms.Resize(
-                    image_size,
-                    interpolation=transforms.InterpolationMode.BICUBIC,
-                ),
-                normalize,
-            ]
-        )
-    else:
-        preproc = transforms.Compose([normalize])
-
-    return preproc(input_tensor)
+    return normalize(input_tensor)
 
 
 def clean_row(row: pd.Series) -> dict[str, Any]:
@@ -112,9 +96,11 @@ def get_audio(
 ) -> tuple[npt.NDArray[np.float32], int]:
     """Load audio for a metadata row."""
     if base_folder is None:
-        base_folder = base_folder
+        base_folder = globals()["base_folder"]
     if collection_map is None:
-        collection_map = collection_map
+        collection_map = globals()["collection_map"]
+    assert base_folder is not None
+    assert collection_map is not None
 
     fname = f"{base_folder}/{collection_map[row['collection']]}/{row['filename']}"
     y, sample_rate = librosa.load(
