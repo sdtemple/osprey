@@ -1,10 +1,10 @@
 #!/bin/bash
-output=$1
+group=$1
 table=$2
 model=$3
 num_workers=$4
 bash fit-model.sh \
-    $output \
+    ../results/$group \
     $table \
     $model \
     False \
