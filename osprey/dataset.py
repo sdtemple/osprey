@@ -98,7 +98,7 @@ class SpectrogramDataset(Dataset):
         
         # Get label
         # y = row['primary_label']
-        y = row['primary_label_append']
+        y = row['primary_label']
         y_idx = self.le.transform([y])[0]
         
         if self.encode_labels_onehot:
@@ -188,7 +188,7 @@ class AudioDataset(Dataset):
 
         x_tensor = torch.from_numpy(audio).float()
         # y = row['primary_label']
-        y = row['primary_label_append']
+        y = row['primary_label']
         y_idx = self.le.transform([y])[0]
         
         if self.encode_labels_onehot:

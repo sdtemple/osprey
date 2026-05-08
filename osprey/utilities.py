@@ -87,8 +87,7 @@ def clean_row(row: pd.Series) -> dict[str, Any]:
     """Subset the useful info in each row."""
     row = row[
         [
-            # "primary_label",
-            "primary_label_append",
+            "primary_label",
             "common_name",
             "sampling_rate_hz",
             "start_seconds",
