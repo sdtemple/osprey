@@ -130,7 +130,6 @@ class SpectrogramDataset(Dataset):
         
         
         # Get label
-        # y = row['primary_label']
         y = row['primary_label']
         y_idx = self.le.transform([y])[0]
         

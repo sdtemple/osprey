@@ -1,4 +1,9 @@
-from .dataset import AudioDataset, SpectrogramDataset, waveform_batch_to_mel
+from .dataset import (
+    AudioDataset, 
+    SpectrogramDataset, 
+    waveform_batch_to_mel,
+    pad_mel_to_multiple,
+)
 from .models import (
     FocalCrossEntropyLoss,
     FocalBCEWithLogitsLoss,
@@ -17,8 +22,6 @@ from .utilities import (
     collection_map,
     sr,
     reformat_image,
-    height,
-    width,
 )
 
 from .augment import (
@@ -32,19 +35,17 @@ from .augment import (
 __all__ = [
     "AudioDataset",
     "SpectrogramDataset",
-    "SimpleCNN",
+    "pad_mel_to_multiple",
     "clean_row",
     "duration",
     "fmax",
     "fmin",
     "get_audio",
     "get_mel",
-    "height",
     "base_folder",
     "collection_map",
     "sr",
     "reformat_image",
-    "width",
     "augmenter_spectrogram",
     "augmenter_waveform",
     "waveform_batch_to_mel",
