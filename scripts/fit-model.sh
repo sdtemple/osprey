@@ -13,6 +13,10 @@ batch_size=${10}
 num_workers=${11}
 mel_time_size=313
 alpha=${12}
+optimizer_name=${13}
+use_cosine_annealing=${14}
+lr=${15}
+mkdir -p "${output}/${model}"
 papermill \
     ../notebooks/fit-spec.ipynb \
     $output/$model/fit-spec-ran.ipynb \
@@ -30,4 +34,7 @@ papermill \
     -p label_smoothing_alpha $alpha \
     -p freeze_inner $freeze_inner \
     -p head_only $head_only \
-    -p conduct_cv $conduct_cv
+    -p conduct_cv $conduct_cv \
+    -p optimizer_name $optimizer_name \
+    -p use_cosine_annealing $use_cosine_annealing \
+    -p lr $lr
