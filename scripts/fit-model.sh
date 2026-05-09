@@ -37,4 +37,5 @@ papermill \
     -p conduct_cv $conduct_cv \
     -p optimizer_name $optimizer_name \
     -p use_cosine_annealing $use_cosine_annealing \
-    -p lr $lr
+    -p lr $lr \
+    -k python3

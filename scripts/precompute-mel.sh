@@ -17,4 +17,5 @@ papermill \
     -p fmin $fmin \
     -p fmax $fmax \
     -p hop_length $hop_length \
-    -p n_fft $n_fft
+    -p n_fft $n_fft \
+    -k python3
