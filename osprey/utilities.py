@@ -66,14 +66,12 @@ def clean_row(row: pd.Series) -> dict[str, Any]:
     row = row[
         [
             "primary_label",
-            "common_name",
             "start",
             "end",
             "filename",
             "collection",
             "latitude",
             "longitude",
-            "class_name",
             "dataset",
         ]
     ]
