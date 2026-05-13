@@ -14,6 +14,7 @@ base_folder = "/nfs/turbo/umor-sethtem/acoustics-data"
 collection_map = {
     'iNat': 'birdclef-2026/train_audio',
     'XC': 'birdclef-2026/train_audio',
+    'soundscape': 'birdclef-2026/train_soundscapes',
     'iNat2': 'birdclef-2025/train_audio',
     'XC2': 'birdclef-2025/train_audio',
     'CSA': 'birdclef-2025/train_audio',
@@ -25,13 +26,6 @@ collection_map = {
     'random-noise': 'random-noise',
     # "add": "additional_data",
 }
-fmin = 0
-fmax = 16000
-duration = 5
-sr = 32000
-n_fft = 2048
-hop_length = 512
-n_mels = 128
 
 def reformat_image(
     input_tensor: torch.Tensor,
@@ -73,9 +67,8 @@ def clean_row(row: pd.Series) -> dict[str, Any]:
         [
             "primary_label",
             "common_name",
-            "sampling_rate_hz",
-            "start_seconds",
-            "end_seconds",
+            "start",
+            "end",
             "filename",
             "collection",
             "latitude",
@@ -91,8 +84,8 @@ def get_audio(
     row: Mapping[str, Any],
     base_folder: str | None = None,
     collection_map: Mapping[str, str] | None = None,
-    sr: int = sr,
-    duration: float = duration,
+    sr: int = 32000,
+    duration: float = 5.,
 ) -> tuple[npt.NDArray[np.float32], int]:
     """Load audio for a metadata row."""
     if base_folder is None:
@@ -107,19 +100,19 @@ def get_audio(
         fname,
         sr=sr,
         duration=duration,
-        offset=row["start_seconds"],
+        offset=row["start"],
     )
     return y, sample_rate
 
 
 def get_mel(
     y: npt.NDArray,
-    sr: int = sr,
-    n_mels: int = n_mels,
-    n_fft: int = n_fft,
-    hop_length: int = hop_length,
-    fmin: float = fmin,
-    fmax: float = fmax,
+    sr: int = 32000,
+    n_mels: int = 128,
+    n_fft: int = 2048,
+    hop_length: int = 512,
+    fmin: float = 0,
+    fmax: float = 16000,
 ) -> npt.NDArray:
     """Get a mel-spectrogram image."""
     x = librosa.feature.melspectrogram(

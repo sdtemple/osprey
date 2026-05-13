@@ -8,23 +8,13 @@ from torch.utils.data import Dataset
 
 from .utilities import (
     clean_row,
-    duration,
-    fmax,
-    fmin,
-    n_fft,
-    n_mels,
-    hop_length,
     get_audio,
     get_mel,
     base_folder,
     collection_map,
-    sr,
 )
 from .augment import (
     augmenter_waveform,
-    p_augment,
-    min_gain_db,
-    max_gain_db,
 )
 
 
@@ -156,8 +146,8 @@ class AudioDataset(Dataset):
         le, # LabelEncoder
         base_folder: str = base_folder,
         collection_map: dict[str, str] = collection_map,
-        sr: int = sr,
-        duration: float = duration,
+        sr: int = 32000,
+        duration: float = 5.,
         encode_labels_onehot: bool = False,
         label_smoothing_alpha: float = 0.0,
     ) -> None:
@@ -237,17 +227,17 @@ class AudioDataset(Dataset):
 
 def waveform_batch_to_mel(
     waveforms: torch.Tensor,
-    sr: int = sr,
-    n_mels: int = n_mels,
-    n_fft: int = n_fft,
-    hop_length: int = hop_length,
-    fmin: float = fmin,
-    fmax: float = fmax,
-    duration: float = duration,
+    sr: int = 32000,
+    n_mels: int = 128,
+    n_fft: int = 2048,
+    hop_length: int = 512,
+    fmin: float = 0,
+    fmax: float = 16000,
+    duration: float = 5.,
     apply_waveform_augment: bool = False,
-    p_augment: float = p_augment,
-    min_gain_db: float = min_gain_db,
-    max_gain_db: float = max_gain_db,
+    p_augment: float = 0.25,
+    min_gain_db: float = -12,
+    max_gain_db: float = 12,
     mel_time_size: int | None = None,
 ) -> torch.Tensor:
     """Convert a batch of waveforms into mel spectrogram tensors.
