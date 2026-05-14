@@ -243,15 +243,13 @@ def acoustic_overlay(x: torch.tensor,
         and its result is returned).
     """
     
-    transforms = v2.Compose([
-        v2.RandomApply([SpectrogramMaxOverlay(mean_number=mean_number,
-                                              max_roll_pct=max_roll_pct,
-                                              )], 
-                       p=p_overlay,
-                       ),
-    ])
+    overlay = SpectrogramMaxOverlay(mean_number=mean_number,
+                                    max_roll_pct=max_roll_pct)
 
-    return transforms(x, y, u, v)
+    if torch.rand(1).item() < float(p_overlay):
+        return overlay(x, y, u, v)
+
+    return x, y
     
     
 def augmenter_spectrogram(x: torch.Tensor,
