@@ -3,7 +3,6 @@ from .dataset import (
     SpectrogramDataset,
     SpectrogramOverlayDataset, 
     waveform_batch_to_mel,
-    pad_mel_to_multiple,
 )
 from .models import (
     FocalCrossEntropyLoss,
@@ -16,6 +15,8 @@ from .utilities import (
     base_folder,
     collection_map,
     reformat_image,
+    pad_mel_to_multiple,
+    pad_mel_spectrogram,
 )
 
 from .augment import (
@@ -32,6 +33,7 @@ __all__ = [
     "SpectrogramDataset",
     "SpectrogramOverlayDataset",
     "pad_mel_to_multiple",
+    "pad_mel_spectrogram",
     "clean_row",
     "get_audio",
     "get_mel",

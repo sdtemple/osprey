@@ -13,39 +13,11 @@ from .utilities import (
     get_mel,
     base_folder,
     collection_map,
+    pad_mel_spectrogram,
 )
 from .augment import (
     augmenter_waveform,
 )
-
-
-def pad_mel_to_multiple(mel: np.ndarray, multiple: int = 32) -> np.ndarray:
-    """Pad a 2D mel spectrogram to 32-aligned dimensions.
-
-    The frequency axis is padded only on top, while the time axis is padded with a
-    random left/right split so the added context is not biased to one side.
-    """
-    if mel.ndim != 2:
-        raise ValueError("Expected a 2D mel spectrogram.")
-
-    freq_pad = (-mel.shape[0]) % multiple
-    time_pad = (-mel.shape[1]) % multiple
-
-    top_pad = freq_pad
-    bottom_pad = 0
-
-    left_pad = np.random.randint(0, time_pad + 1) if time_pad > 0 else 0
-    right_pad = time_pad - left_pad
-
-    if freq_pad > 0 or time_pad > 0:
-        mel = np.pad(
-            mel,
-            ((top_pad, bottom_pad), (left_pad, right_pad)),
-            mode="constant",
-            constant_values=0,
-        )
-
-    return mel
 
 ### gpu bound ###
 
@@ -96,17 +68,7 @@ class SpectrogramDataset(Dataset):
         # Load spectrogram from .npz file
         x = np.load(npz_file)['spectrogram']
         
-        # Apply random padding if mel_time_size is specified
-        if self.mel_time_size is not None:
-            current_time_size = x.shape[-1]  # Last dimension is time
-            if current_time_size < self.mel_time_size:
-                pad_amount = self.mel_time_size - current_time_size
-                # Randomly distribute padding between left and right
-                left_pad = np.random.randint(0, pad_amount + 1)
-                right_pad = pad_amount - left_pad
-                x = np.pad(x, ((0, 0), (left_pad, right_pad)), mode='constant', constant_values=0)
-
-        x = pad_mel_to_multiple(x, 32)
+        x = pad_mel_spectrogram(x, mel_time_size=self.mel_time_size)
         
         # Convert to tensor
         x_tensor = torch.from_numpy(x).float()
@@ -181,32 +143,12 @@ class SpectrogramOverlayDataset(Dataset):
         
         # Load spectrogram from .npz file
         x = np.load(npz_file)['spectrogram']
+        x = pad_mel_spectrogram(x, mel_time_size=self.mel_time_size)
         u = np.array(
             [
-                np.load(npz_overlay_file)['spectrogram'] for npz_overlay_file in npz_overlay_files 
+                pad_mel_spectrogram(np.load(_)['spectrogram'], self.mel_time_size) for _ in npz_overlay_files 
             ]
         )
-        
-        # Apply random padding if mel_time_size is specified
-        if self.mel_time_size is not None:
-            current_time_size = x.shape[-1]  # Last dimension is time
-            if current_time_size < self.mel_time_size:
-                pad_amount = self.mel_time_size - current_time_size
-                # Randomly distribute padding between left and right
-                left_pad = np.random.randint(0, pad_amount + 1)
-                right_pad = pad_amount - left_pad
-                x = np.pad(x, ((0, 0), (left_pad, right_pad)), mode='constant', constant_values=0)
-            u_padded = []
-            for overlay in u:
-                current_time_size = overlay.shape[-1]
-                if current_time_size < self.mel_time_size:
-                    pad_amount = self.mel_time_size - current_time_size
-                    left_pad = np.random.randint(0, pad_amount + 1)
-                    right_pad = pad_amount - left_pad
-                    overlay = np.pad(overlay, ((0, 0), (left_pad, right_pad)), mode='constant', constant_values=0)
-                u_padded.append(pad_mel_to_multiple(overlay, 32))
-            u = np.array(u_padded)
-        x = pad_mel_to_multiple(x, 32)
         
         # Convert to tensor
         x_tensor = torch.from_numpy(x).float()
@@ -363,18 +305,8 @@ def waveform_batch_to_mel(
             fmin=fmin,
             fmax=fmax,
         )
-        
-        # Apply random padding if mel_time_size is specified
-        if mel_time_size is not None:
-            current_time_size = mel.shape[-1]  # Last dimension is time
-            if current_time_size < mel_time_size:
-                pad_amount = mel_time_size - current_time_size
-                # Randomly distribute padding between left and right
-                left_pad = np.random.randint(0, pad_amount + 1)
-                right_pad = pad_amount - left_pad
-                mel = np.pad(mel, ((0, 0), (left_pad, right_pad)), mode='constant', constant_values=0)
 
-        mel = pad_mel_to_multiple(mel, 32)
+        mel = pad_mel_spectrogram(mel, mel_time_size=mel_time_size)
         
         mel_batch.append(torch.from_numpy(mel).float().unsqueeze(0))
 

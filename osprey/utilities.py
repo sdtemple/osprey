@@ -124,3 +124,50 @@ def get_mel(
     )
     x = librosa.power_to_db(x, ref=np.max)
     return x[-1::-1].copy()
+
+
+def pad_mel_to_multiple(mel: npt.NDArray, multiple: int = 32) -> npt.NDArray:
+    """Pad a 2D mel spectrogram to dimensions divisible by ``multiple``."""
+    if mel.ndim != 2:
+        raise ValueError("Expected a 2D mel spectrogram.")
+
+    freq_pad = (-mel.shape[0]) % multiple
+    time_pad = (-mel.shape[1]) % multiple
+
+    top_pad = freq_pad
+    bottom_pad = 0
+
+    left_pad = np.random.randint(0, time_pad + 1) if time_pad > 0 else 0
+    right_pad = time_pad - left_pad
+
+    if freq_pad > 0 or time_pad > 0:
+        mel = np.pad(
+            mel,
+            ((top_pad, bottom_pad), (left_pad, right_pad)),
+            mode="constant",
+            constant_values=0,
+        )
+
+    return mel
+
+
+def pad_mel_spectrogram(
+    mel: npt.NDArray,
+    mel_time_size: int | None = None,
+    multiple: int = 32,
+) -> npt.NDArray:
+    """Pad a mel spectrogram to a target time length and aligned size."""
+    if mel_time_size is not None:
+        current_time_size = mel.shape[-1]
+        if current_time_size < mel_time_size:
+            pad_amount = mel_time_size - current_time_size
+            left_pad = np.random.randint(0, pad_amount + 1)
+            right_pad = pad_amount - left_pad
+            mel = np.pad(
+                mel,
+                ((0, 0), (left_pad, right_pad)),
+                mode="constant",
+                constant_values=0,
+            )
+
+    return pad_mel_to_multiple(mel, multiple)
