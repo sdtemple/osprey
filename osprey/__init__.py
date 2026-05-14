@@ -1,6 +1,7 @@
 from .dataset import (
     AudioDataset, 
-    SpectrogramDataset, 
+    SpectrogramDataset,
+    SpectrogramOverlayDataset, 
     waveform_batch_to_mel,
     pad_mel_to_multiple,
 )
@@ -20,6 +21,7 @@ from .utilities import (
 from .augment import (
     augmenter_spectrogram,
     augmenter_waveform,
+    acoustic_overlay,
     p_augment,
     min_gain_db,
     max_gain_db,
@@ -28,6 +30,7 @@ from .augment import (
 __all__ = [
     "AudioDataset",
     "SpectrogramDataset",
+    "SpectrogramOverlayDataset",
     "pad_mel_to_multiple",
     "clean_row",
     "get_audio",
@@ -37,6 +40,7 @@ __all__ = [
     "reformat_image",
     "augmenter_spectrogram",
     "augmenter_waveform",
+    "acoustic_overlay",
     "waveform_batch_to_mel",
     "p_augment",
     "min_gain_db",

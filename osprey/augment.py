@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from random import randint
 from audiomentations import Compose, AddColorNoise, TimeStretch, PitchShift, Shift, Gain
 import numpy.typing as npt
 import numpy as np
@@ -15,9 +14,53 @@ max_gain_db = 12.
 
 ### for spectrogram ###
 
+class SpectrogramMaxOverlay(nn.Module):
+    """Custom transform to max acoustic overlay"""
+    def __init__(self, mean_number: int = 1, max_roll_pct: float = 0.02):
+        super().__init__()
+        self.mean_number = mean_number
+        self.max_roll_pct = max_roll_pct
+    def forward(self, 
+                x: torch.Tensor, 
+                y: torch.Tensor, 
+                u: torch.Tensor, 
+                v: torch.Tensor,
+                ) -> torch.Tensor:
+        # maximum acoustic overlay
+        max_number = u.size(0)
+        num_overlay = int(np.random.poisson(self.mean_number, size=1).item())
+        num_overlay = max(0, min(num_overlay, max_number,))
+        if num_overlay <= 0: # premature exit
+            return x, y
+        # Sample rows/instances from u and v without replacement using the same indices
+        else:
+            # use torch.randperm to get random unique indices on the same device as u
+            idx = torch.randperm(max_number, device=u.device)[:num_overlay]
+            u_selected = u[idx]
+            v_selected = v[idx]
+
+        # Load all numpy files in files_overlay
+        time_ticks = max(1, int(x.size(-1) * self.max_roll_pct))
+        shifts = torch.randint(0, time_ticks, (num_overlay,)).tolist()
+        rolled = torch.stack(
+            [
+                torch.roll(u_selected[_], shifts=shifts[_], dims=-1) for _ in range(num_overlay)
+            ],
+            dim=0,
+        )
+        overlays_log = torch.cat(((rolled, x)), dim=0)
+        overlays_exp = torch.exp(overlays_log)
+        overlays_max = torch.max(
+            overlays_exp, dim=0
+        )
+        ref_max = torch.max(overlays_max, 1e-10)
+        db_tensor = 10.0 * (torch.log10(overlays_max) - torch.log10(ref_max))
+        multi_label_tensor = (y + v_selected.sum(dim=0)).clamp(max=1.)
+        return db_tensor, multi_label_tensor
+
 class SpectrogramGain(nn.Module):
     """Custom transform to add logarithmic gain without overflowing uint8."""
-    def __init__(self, max_gain=15., max_value: float = 255.0):
+    def __init__(self, max_gain: float =10., max_value: float = 255.0):
         super().__init__()
         self.max_gain = max_gain
         self.max_value = max_value
@@ -158,6 +201,59 @@ class SpectrogramFrequencyMask(nn.Module):
             
         return x_masked
     
+def acoustic_overlay(x: torch.tensor,
+                     y: torch.tensor,
+                     u: torch.tensor,
+                     v: torch.tensor,
+                     p_overlay: float = 0.33,
+                     mean_number: int = 1,
+                     max_roll_pct: float = 0.02,
+                     ):
+    """Apply random acoustic overlay augmentation to a spectrogram batch.
+
+    This function builds a torchvision-style transform pipeline that optionally
+    overlays additional audio examples onto the input spectrogram(s). It
+    constructs a composed transform containing SpectrogramMaxOverlay wrapped
+    with RandomApply to control the probability of applying the overlay.
+
+    Parameters
+    ----------
+    x : torch.Tensor
+        Input spectrogram tensor (batch or single example) to augment.
+    y : torch.Tensor
+        Corresponding labels for the input examples (passed through to the
+        transform for potential use by the overlay implementation).
+    u : torch.Tensor
+        Auxiliary spectrogram tensor (same role as x) representing the mixup
+        input to be potentially overlaid/mixed in. Analogous to x.
+    v : torch.Tensor
+        Auxiliary labels (same role as y) corresponding to u. Analogous to y.
+    p_overlay : float
+        Probability of applying the overlay transform (default 0.33).
+    mean_number : int
+        Mean number of overlay examples to mix in when overlay is applied.
+    max_roll_pct : float
+        Maximum random circular roll (as a fraction of time steps) applied to
+        overlay examples before mixing.
+
+    Returns
+    -------
+    torch.Tensor
+        The augmented spectrogram tensor (the transform is invoked immediately
+        and its result is returned).
+    """
+    
+    transforms = v2.Compose([
+        v2.RandomApply([SpectrogramMaxOverlay(mean_number=mean_number,
+                                              max_roll_pct=max_roll_pct,
+                                              )], 
+                       p=p_overlay,
+                       ),
+    ])
+
+    return transforms(x, y, u, v)
+    
+    
 def augmenter_spectrogram(x: torch.Tensor,
                           # SpectrogramGain
                           max_gain: float = 25.,
@@ -224,7 +320,6 @@ def augmenter_spectrogram(x: torch.Tensor,
     ])
     
     return transforms(x)
-    
 
 
 ### for waveform ###
